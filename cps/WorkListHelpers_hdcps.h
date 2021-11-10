@@ -27,6 +27,7 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <iostream>
 #include <queue>
+#include <cmath>
 using namespace std;
 namespace galois {
 namespace worklists {
