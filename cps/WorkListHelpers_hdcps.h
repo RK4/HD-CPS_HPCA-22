@@ -343,6 +343,7 @@ public:
           pd += abs(pd_);
         } 
         pd = 0;
+        std::cout << "PD " << pd << std::endl;
       }
     }
     p.pd_counter++;
@@ -490,6 +491,7 @@ public:
               prev_decision = false;
             }
           }
+          std::cout << "PD " << pd << std::endl;
           pd_prev = pd;
           pd = 0;
           

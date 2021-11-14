@@ -31,7 +31,7 @@
 #include "Lonestar/BFS_SSSP.h"
 
 #include <iostream>
-
+#include <cmath>
 namespace cll = llvm::cl;
 
 static const char* name = "Single Source Shortest Path";
@@ -592,6 +592,7 @@ int main(int argc, char** argv) {
   }
 
   Tmain.stop();
+  std::cout << "Elapsed time: " << Tmain.get_usec()/1000 <<"msec" << std::endl;
 
   galois::reportPageAlloc("MeminfoPost");
 
