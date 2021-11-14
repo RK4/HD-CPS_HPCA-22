@@ -16,6 +16,7 @@ cd build_release
 cmake ..
 make -j32
 
+cd $MAIN_DIR
 
 # For PMOD
 git clone https://github.com/serifyesil/PMOD.git
