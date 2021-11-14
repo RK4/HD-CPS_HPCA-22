@@ -5,8 +5,9 @@ reset=`tput sgr0`
 
 MAIN_DIR=`pwd`
 
-echo "${green}Copying Files For RELD and HDCPS${reset}"
-cp cps/WorkListHelpers_hdcps.h ./Galois/libgalois/include/galois/worklists//WorkListHelpers.h
+echo "${green}Copying Files For RELD, HDCPS, and Minnow${reset}"
+cp cps/WorkListHelpers_hdcps.h ./Galois/libgalois/include/galois/worklists/WorkListHelpers.h
+cp cps/Obim5.h ./Galois/libgalois/include/galois/worklists/Obim.h
 
 echo "${green}Copying Files For PMOD and OBIM${reset}"
 cp cps/AdaptiveObim.h ./PMOD/Galois-2.2.1/include/Galois/WorkList/AdaptiveObim.h

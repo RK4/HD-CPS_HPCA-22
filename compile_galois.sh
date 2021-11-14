@@ -22,20 +22,24 @@ cd $MAIN_DIR
 git clone https://github.com/serifyesil/PMOD.git
 cd PMOD
 
-export GALOIS_HOME=./Galois-2.2.1/
+export PMOD_HOME=./Galois-2.2.1/
 
-sed -i '53i #include <math.h>' $GALOIS_HOME/include/Galois/Runtime/ParallelWork.h
-sed -i '50i #include <math.h>' $GALOIS_HOME/include/Galois/WorkList/AdaptiveObim.h
+# Adding math lib for compilation
+sed -i '53i #include <math.h>' $PMOD_HOME/include/Galois/Runtime/ParallelWork.h
+sed -i '50i #include <math.h>' $PMOD_HOME/include/Galois/WorkList/AdaptiveObim.h
+# Lock acquistion waiting bug fix
 sed -i 's/while(current.getRemote(i)->lock.try_lock())/while(!current.getRemote(i)->lock.try_lock());/' $GALOIS_HOME/include/Galois/WorkList/AdaptiveObim.h
 
 #chunk sizes if needed
-echo "#define CHUNK_SIZE 64" > $GALOIS_HOME/apps/sssp/chunk_size.h
-echo "#define CHUNK_SIZE 64" > $GALOIS_HOME/apps/bfs/chunk_size.h
-echo "#define CHUNK_SIZE 64" > $GALOIS_HOME/apps/astar/chunk_size.h
-echo "#define CHUNK_SIZE 64" > $GALOIS_HOME/apps/boruvka/chunk_size.h
-echo "#define CHUNK_SIZE 64" > $GALOIS_HOME/apps/pagerank/chunk_size.h
+echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/sssp/chunk_size.h
+echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/bfs/chunk_size.h
+echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/astar/chunk_size.h
+echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/boruvka/chunk_size.h
+echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/pagerank/chunk_size.h
+#echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/color/chunk_size.h
 
-cd $GALOIS_HOME;
+
+cd $PMOD_HOME;
 
 mkdir build_final;
 cd build_final;
@@ -57,6 +61,9 @@ make clean; make
 
 cd ../pagerank;
 make clean; make
+
+#cd ../color;
+#make clean; make
 
 cd $MAIN_DIR
 
