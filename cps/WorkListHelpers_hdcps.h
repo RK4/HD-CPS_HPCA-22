@@ -28,6 +28,7 @@
 #include <iostream>
 #include <queue>
 #include <cmath>
+
 using namespace std;
 namespace galois {
 namespace worklists {
@@ -340,7 +341,7 @@ public:
         for (int i = 1; i <  runtime::activeThreads; i++) {
           int pd_ = p.latest_index - data.getRemote(i)->latest_index;
           pd += abs(pd_);
-        }
+        } 
         pd = 0;
       }
     }
