@@ -3,7 +3,10 @@ red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
 
-MAIN_DIR=`pwd`
+export MAIN_DIR=`pwd`
+export GALOIS_DIR=$MAIN_DIR/Galois/build_release/lonestar
+export PMOD_DIR=$MAIN_DIR/PMOD/Galois-2.2.1/build/apps
+
 
 echo "${green}Copying Files For RELD, HDCPS, and Minnow${reset}"
 cp cps/WorkListHelpers_hdcps.h ./Galois/libgalois/include/galois/worklists/WorkListHelpers.h

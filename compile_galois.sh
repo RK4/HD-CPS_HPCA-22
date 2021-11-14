@@ -4,6 +4,9 @@ green=`tput setaf 2`
 reset=`tput sgr0`
 
 export MAIN_DIR=`pwd`
+export GALOIS_DIR=$MAIN_DIR/Galois/build_release/lonestar
+export PMOD_DIR=$MAIN_DIR/PMOD/Galois-2.2.1/build/apps
+
 
 echo "${green}Cloning Galois${reset}"
 git clone -b release-5.0 https://github.com/IntelligentSoftwareSystems/Galois
@@ -22,7 +25,7 @@ cd $MAIN_DIR
 git clone https://github.com/serifyesil/PMOD.git
 cd PMOD
 
-export PMOD_HOME=./Galois-2.2.1/
+export PMOD_HOME=$MAIN_DIR/PMOD/Galois-2.2.1/build
 
 # Adding math lib for compilation
 sed -i '53i #include <math.h>' $PMOD_HOME/include/Galois/Runtime/ParallelWork.h

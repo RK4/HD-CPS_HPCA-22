@@ -20,6 +20,8 @@
 #ifndef GALOIS_WORKLIST_WORKLISTHELPERS_H
 #define GALOIS_WORKLIST_WORKLISTHELPERS_H
 
+#include <algorithm>
+
 #include "WLCompileCheck.h"
 #include "../PriorityQueue.h"
 #include "galois/substrate/PtrLock.h"
