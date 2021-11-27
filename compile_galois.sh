@@ -43,11 +43,13 @@ echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/pagerank/chunk_size.h
 
 cd $PMOD_HOME;
 
-mkdir build_final;
-cd build_final;
+mkdir build;
+cd build;
 rm -rf *
 cmake ../
 
+cd tools;
+make; 
 
 cd apps/sssp;
 make clean; make;

@@ -18,14 +18,13 @@ wget -c http://users.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.
 gunzip USA-road-d.USA.gr.gz
 
 echo "${green}Converting Graph to binary format${reset}"
-$MAIN_DIR/Galois/build/tools/graph-convert-standalone/graph-convert-standalone -dimacs2gr USA-road-d.USA64.gr USA-road-dUSA64.bin
+$PMOD_HOME/Galois/build/tools/graph-convert-standalone/graph-convert -dimacs2gr USA-road-d.USA64.gr USA-road-dUSA64.bin
 
 echo "${green}Fetching Web Google graph${reset}"
 wget -c https://snap.stanford.edu/data/web-Google.txt.gz
 gunzip web-Google.txt.gz
 
-convert the graph to binary
 echo "${green}Converting Graph to binary format${reset}"
-$MAIN_DIR/Galois/build/tools/graph-convert-standalone/graph-convert-standalone -intedgelist2gr web-Google.txt web-Google.bin 
+$PMOD_HOME/Galois/build/tools/graph-convert-standalone/graph-convert-standalone -intedgelist2gr web-Google.txt web-Google.bin 
 
 cd $MAIN_DIR
