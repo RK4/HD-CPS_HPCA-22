@@ -3,6 +3,12 @@ red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
 
+export MAIN_DIR=`pwd`
+export GALOIS_HOME=$MAIN_DIR/Galois
+export PMOD_HOME=$MAIN_DIR/PMOD/Galois-2.2.1
+export GALOIS_DIR=$MAIN_DIR/Galois/build/lonestar
+export PMOD_DIR=$MAIN_DIR/PMOD/Galois-2.2.1/build/apps
+
 #goto datasets folder
 mkdir -p datasets
 cd datasets
@@ -14,12 +20,12 @@ gunzip USA-road-d.USA.gr.gz
 echo "${green}Converting Graph to binary format${reset}"
 $MAIN_DIR/Galois/build/tools/graph-convert-standalone/graph-convert-standalone -dimacs2gr USA-road-d.USA64.gr USA-road-dUSA64.bin
 
-#echo "${green}Fetching Web Google graph${reset}"
-#wget -c https://snap.stanford.edu/data/web-Google.txt.gz
-#gunzip web-Google.txt.gz
+echo "${green}Fetching Web Google graph${reset}"
+wget -c https://snap.stanford.edu/data/web-Google.txt.gz
+gunzip web-Google.txt.gz
 
-#convert the graph to binary
-#echo "${green}Converting Graph to binary format${reset}"
-#$MAIN_DIR/Galois/build/tools/graph-convert-standalone/graph-convert-standalone -intedgelist2gr web-Google.txt web-Google.bin 
+convert the graph to binary
+echo "${green}Converting Graph to binary format${reset}"
+$MAIN_DIR/Galois/build/tools/graph-convert-standalone/graph-convert-standalone -intedgelist2gr web-Google.txt web-Google.bin 
 
-cd ..
+cd $MAIN_DIR

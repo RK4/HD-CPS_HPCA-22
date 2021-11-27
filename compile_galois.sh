@@ -4,7 +4,9 @@ green=`tput setaf 2`
 reset=`tput sgr0`
 
 export MAIN_DIR=`pwd`
-export GALOIS_DIR=$MAIN_DIR/Galois/build_release/lonestar
+export GALOIS_HOME=$MAIN_DIR/Galois
+export PMOD_HOME=$MAIN_DIR/PMOD/Galois-2.2.1
+export GALOIS_DIR=$MAIN_DIR/Galois/build/lonestar
 export PMOD_DIR=$MAIN_DIR/PMOD/Galois-2.2.1/build/apps
 
 
@@ -14,8 +16,8 @@ cd Galois
 
 # Compile Galois
 echo "${green}Compiling Galois${reset}"
-mkdir build_release
-cd build_release
+mkdir build
+cd build
 cmake ..
 make -j32
 
@@ -25,13 +27,11 @@ cd $MAIN_DIR
 git clone https://github.com/serifyesil/PMOD.git
 cd PMOD
 
-export PMOD_HOME=$MAIN_DIR/PMOD/Galois-2.2.1/build
-
 # Adding math lib for compilation
 sed -i '53i #include <math.h>' $PMOD_HOME/include/Galois/Runtime/ParallelWork.h
 sed -i '50i #include <math.h>' $PMOD_HOME/include/Galois/WorkList/AdaptiveObim.h
 # Lock acquistion waiting bug fix
-sed -i 's/while(current.getRemote(i)->lock.try_lock())/while(!current.getRemote(i)->lock.try_lock());/' $GALOIS_HOME/include/Galois/WorkList/AdaptiveObim.h
+sed -i 's/while(current.getRemote(i)->lock.try_lock())/while(!current.getRemote(i)->lock.try_lock());/' $PMOD_HOME/include/Galois/WorkList/AdaptiveObim.h
 
 #chunk sizes if needed
 echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/sssp/chunk_size.h
@@ -41,13 +41,12 @@ echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/boruvka/chunk_size.h
 echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/pagerank/chunk_size.h
 #echo "#define CHUNK_SIZE 64" > $PMOD_HOME/apps/color/chunk_size.h
 
-
 cd $PMOD_HOME;
 
 mkdir build_final;
 cd build_final;
 rm -rf *
-cmake ../ -DCMAKE_BUILD_TYPE=Debug;
+cmake ../
 
 
 cd apps/sssp;
