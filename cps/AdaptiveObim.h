@@ -223,12 +223,12 @@ private:
     int pd_counter = 0;
     unsigned int latest_index = 0;
 
-    perItem() :
+    perItem()
       //curIndex(std::numeric_limits<Index>::min()),
       //scanStart(std::numeric_limits<Index>::min()),
-      current(0), lastMasterVersion(0), numPops(0), sinceLastFix(0),
-      pushesLastPeriod(0), priosLastPeriod(0), maxPrioDiffLastPeriod(0), popsFromSameQ(0), ctr(0),
-      minPrio(std::numeric_limits<Index>::max()), maxPrio(std::numeric_limits<Index>::min()), pmodAllDeq(0)
+      //current(0), lastMasterVersion(0), numPops(0), sinceLastFix(0),
+      //pushesLastPeriod(0), priosLastPeriod(0), maxPrioDiffLastPeriod(0), popsFromSameQ(0), ctr(0),
+      //minPrio(std::numeric_limits<Index>::max()), maxPrio(std::numeric_limits<Index>::min()), pmodAllDeq(0)
       { }
   };
 

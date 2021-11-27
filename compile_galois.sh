@@ -50,6 +50,7 @@ cmake ../
 
 cd tools;
 make; 
+cd ..
 
 cd apps/sssp;
 make clean; make;

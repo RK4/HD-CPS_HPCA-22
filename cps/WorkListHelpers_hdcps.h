@@ -30,6 +30,7 @@
 #include <iostream>
 #include <queue>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 namespace galois {
