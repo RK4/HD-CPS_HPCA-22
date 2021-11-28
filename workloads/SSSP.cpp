@@ -61,6 +61,7 @@ enum Algo {
   deltaStep,
   deltaStep_reld,
   deltaStep_hdcps,
+  deltaStep_minn,
   serDeltaTile,
   serDelta,
   dijkstraTile,
@@ -69,7 +70,7 @@ enum Algo {
   topoTile
 };
 
-const char* const ALGO_NAMES[] = {"deltaTile", "deltaStep", "deltaStep_reld", "deltaStep_hdcps", "serDeltaTile",
+const char* const ALGO_NAMES[] = {"deltaTile", "deltaStep", "deltaStep_reld", "deltaStep_minn", "deltaStep_hdcps", "serDeltaTile",
                                   "serDelta",  "dijkstraTile", "dijkstra",
                                   "topo",      "topoTile"};
 
@@ -78,6 +79,7 @@ static cll::opt<Algo>
          cll::values(clEnumVal(deltaTile, "deltaTile"),
                      clEnumVal(deltaStep, "deltaStep"),
                      clEnumVal(deltaStep_reld, "deltaStep_reld"),
+                     clEnumVal(deltaStep_minn, "deltaStep_minn"),
                      clEnumVal(deltaStep_hdcps, "deltaStep_hdcps"),
                      clEnumVal(serDeltaTile, "serDeltaTile"),
                      clEnumVal(serDelta, "serDelta"),
@@ -122,6 +124,80 @@ void deltaStepAlgo(Graph& graph, GNode source, const P& pushWrap,
 
   using PSchunk = gwl::PerSocketChunkFIFO<CHUNK_SIZE>;
   using OBIM    = gwl::OrderedByIntegerMetric<UpdateRequestIndexer, PSchunk>;
+  
+  graph.getData(source) = 0;
+
+  galois::InsertBag<T> initBag;
+  pushWrap(initBag, source, 0, "parallel");
+
+  galois::for_each(galois::iterate(initBag),
+                   [&](const T& item, auto& ctx) {
+                     constexpr galois::MethodFlag flag =
+                         galois::MethodFlag::UNPROTECTED;
+                     const auto& sdata = graph.getData(item.src, flag);
+
+                     if (sdata < item.dist) {
+                       if (TRACK_WORK)
+                         WLEmptyWork += 1;
+                       return;
+                     }
+
+                     for (auto ii : edgeRange(item)) {
+
+                       GNode dst          = graph.getEdgeDst(ii);
+                       auto& ddist        = graph.getData(dst, flag);
+                       Dist ew            = graph.getEdgeData(ii, flag);
+                       const Dist newDist = sdata + ew;
+
+                       while (true) {
+                         Dist oldDist = ddist;
+
+                         if (oldDist <= newDist) {
+                           break;
+                         }
+
+                         if (ddist.compare_exchange_weak(
+                                 oldDist, newDist, std::memory_order_relaxed)) {
+
+                           if (TRACK_WORK) {
+                             //! [per-thread contribution of self-defined stats]
+                             if (oldDist != SSSP::DIST_INFINITY) {
+                               BadWork += 1;
+                             }
+                             //! [per-thread contribution of self-defined stats]
+                           }
+
+                           pushWrap(ctx, dst, newDist);
+                           break;
+                         }
+                       }
+                     }
+                   },
+                   galois::wl<OBIM>(UpdateRequestIndexer{stepShift}),
+                   galois::no_conflicts(), galois::loopname("SSSP"));
+
+  if (TRACK_WORK) {
+    //! [report self-defined stats]
+    galois::runtime::reportStat_Single("SSSP", "BadWork", BadWork.reduce());
+    //! [report self-defined stats]
+    galois::runtime::reportStat_Single("SSSP", "WLEmptyWork",
+                                       WLEmptyWork.reduce());
+  }
+}
+
+template <typename T, typename P, typename R>
+void deltaStepAlgoMinn(Graph& graph, GNode source, const P& pushWrap,
+                   const R& edgeRange) {
+
+  //! [reducible for self-defined stats]
+  galois::GAccumulator<size_t> BadWork;
+  //! [reducible for self-defined stats]
+  galois::GAccumulator<size_t> WLEmptyWork;
+
+  namespace gwl = galois::worklists;
+
+  using PSchunk = gwl::PerSocketChunkFIFO<CHUNK_SIZE>;
+  using OBIM    = gwl::OrderedByIntegerMetricMinn<UpdateRequestIndexer, PSchunk>;
   
   graph.getData(source) = 0;
 
@@ -254,6 +330,8 @@ void deltaStepAlgoRELD(Graph& graph, GNode source, const P& pushWrap,
                                        WLEmptyWork.reduce());
   }
 }
+
+
 
 template <typename T, typename P, typename R>
 void deltaStepAlgoHDCPS(Graph& graph, GNode source, const P& pushWrap,
@@ -560,6 +638,9 @@ int main(int argc, char** argv) {
   case deltaStep_reld:
       deltaStepAlgoRELD<UpdateRequest>(graph, source, ReqPushWrap(),
                                  OutEdgeRangeFn{graph});
+  case deltaStep_minn:
+      deltaStepAlgoMinn<UpdateRequest>(graph, source, ReqPushWrap(),
+                                 OutEdgeRangeFn{graph});                                 
       break;  
   case deltaStep_hdcps:
       deltaStepAlgoHDCPS<UpdateRequest>(graph, source, ReqPushWrap(),
@@ -592,7 +673,7 @@ int main(int argc, char** argv) {
   }
 
   Tmain.stop();
-  std::cout << "Elapsed time: " << Tmain.get_usec()/1000 <<"msec" << std::endl;
+  std::cout << "Elapsed Time: " << Tmain.get_usec()/1000 <<"msec" << std::endl;
 
   galois::reportPageAlloc("MeminfoPost");
 

@@ -9,7 +9,6 @@ export PMOD_HOME=$MAIN_DIR/PMOD/Galois-2.2.1
 export GALOIS_DIR=$MAIN_DIR/Galois/build/lonestar
 export PMOD_DIR=$MAIN_DIR/PMOD/Galois-2.2.1/build/apps
 
-
 echo "${green}Cloning Galois${reset}"
 git clone -b release-5.0 https://github.com/IntelligentSoftwareSystems/Galois
 cd Galois
