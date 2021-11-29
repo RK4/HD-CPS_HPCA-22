@@ -25,33 +25,33 @@ cd $GALOIS_DIR
 cd sssp;
 make clean; make -j32;
 
-cd ../bfs;
-make clean; make -j32;
+#cd ../bfs;
+#make clean; make -j32;
 
-cd ../astar;
-make clean; make -j32;
+#cd ../astar;
+#make clean; make -j32;
 
-cd ../boruvka;
-make clean; make -j32;
+#cd ../boruvka;
+#make clean; make -j32;
 
-cd ../pagerank;
-make clean; make -j32;
+#cd ../pagerank;
+#make clean; make -j32;
 
 cd $PMOD_DIR
 cd sssp;
 make clean; make -j32;
 
-cd ../bfs;
-make clean; make -j32;
+#cd ../bfs;
+#make clean; make -j32;
 
-cd ../astar;
-make clean; make -j32;
+#cd ../astar;
+#make clean; make -j32;
 
-cd ../boruvka;
-make clean; make -j32;
+#cd ../boruvka;
+#make clean; make -j32;
 
-cd ../pagerank;
-make clean; make -j32;
+#cd ../pagerank;
+#make clean; make -j32;
 
 cd $MAIN_DIR
 

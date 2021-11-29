@@ -333,6 +333,7 @@ public:
     p.m_mutex.unlock();
     
     if (substrate::ThreadPool::getTID() == 0) {
+     
       /* Priority drift logic */
       if (p.pd_counter == 2000) {
         sync = true;
@@ -345,8 +346,8 @@ public:
           int pd_ = p.latest_index - data.getRemote(i)->latest_index;
           pd += abs(pd_);
         } 
-        pd = 0;
         std::cout << "PD " << pd << std::endl;
+        pd = 0;
       }
     }
     p.pd_counter++;

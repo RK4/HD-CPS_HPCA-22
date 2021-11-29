@@ -823,10 +823,10 @@ public:
       }
       else if (minnow_thread_id == 38) {
         start = 18;
-        end = 24;
+        end = 26;
       }
       else if (minnow_thread_id == 39) {
-        start = 25;
+        start = 27;
         end = 35;
       }
 
@@ -867,6 +867,7 @@ public:
       }
 
       /* POP */
+      work_done = false;
       for (int i = start; i < end; i++) {
         CTy* C  = data.getRemote(i)->current;
         
@@ -932,13 +933,15 @@ public:
         continue;
       }
       /* Check termination condition */
-      //if (work_done == false) 
-      work_done_counter++;
-      if (work_done_counter == 100000) {
-        cout << work_done_counter << endl;
-        break;
+      if (work_done == false) {
+        work_done_counter++;
+        
+        if (work_done_counter == 100) {
+          break;
+        }
       }
-      }  
+      }
+     
     }
     else {
       galois::optional<value_type> retval;
@@ -953,11 +956,11 @@ public:
           if (p.pd_counter == 2000) {
             sync = true;
           }
-          if (p.pd_counter == 2100) {
+          if (p.pd_counter == 2001) {
             sync = false;
             p.pd_counter = 0;
           
-            for (int i = 1; i <  runtime::activeThreads; i++) {
+            for (int i = 1; i < 36; i++) {
               int pd_ = p.latest_index - data.getRemote(i)->latest_index;
               pd += abs(pd_);
             } 
@@ -966,7 +969,7 @@ public:
           }
         }
         p.pd_counter++;
-
+        if (sync == true) p.latest_index = indexer(retval.get());
         return retval;
       }
     }
