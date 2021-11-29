@@ -18,7 +18,7 @@ wget -c http://users.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.
 gunzip USA-road-d.USA.gr.gz
 
 echo "${green}Converting Graph to binary format${reset}"
-$PMOD_HOME/build/tools/graph-convert-standalone/graph-convert-standalone -dimacs2gr USA-road-d.USA.gr USA-road-dUSA64.bin
+$PMOD_HOME/build/tools/graph-convert-standalone/graph-convert-standalone -dimacs2gr USA-road-d.USA.gr USA-road-dUSA.bin
 
 echo "${green}Fetching Web Google graph${reset}"
 wget -c https://snap.stanford.edu/data/web-Google.txt.gz
