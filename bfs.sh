@@ -15,13 +15,13 @@ cat temp | grep "PD"| tail -n1 >> output/bfs.out
 
 echo "${green}Running BFS with OBIM${reset}"
 echo "Running BFS with OBIM" >>  output/bfs.out
-$PMOD_DIR/bfs/bfs $MAIN_DIR/datasets/USA-road-dUSA.bin  -t 40 -startNode 0 -wl obim -delta 14 > temp
+$PMOD_DIR/bfs/bfs $MAIN_DIR/datasets/USA-road-dUSA.bin  -t 40 -startNode 0 -wl obim -delta 0 -algo async > temp
 cat temp | grep 'Elapsed Time' >> output/bfs.out
 cat temp | grep "PD"| tail -n1 >> output/bfs.out
 
 echo "${green}Running BFS with PMOD${reset}"
 echo "Running BFS with PMOD" >>  output/bfs.out 
-$PMOD_DIR/bfs/bfs $MAIN_DIR/datasets/USA-road-dUSA.bin  -t 40 -startNode 0 -wl adap-obim -delta 0 > temp
+$PMOD_DIR/bfs/bfs $MAIN_DIR/datasets/USA-road-dUSA.bin  -t 40 -startNode 0 -wl adap-obim -delta 0 -algo async > temp
 cat temp | grep 'Elapsed Time' >> output/bfs.out
 cat temp | grep "PD"| tail -n1 >> output/bfs.out
 

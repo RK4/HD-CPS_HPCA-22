@@ -18,6 +18,10 @@ cp $MAIN_DIR/workloads/SSSP_2.2.1.cpp $PMOD_HOME/apps/sssp/SSSP.cpp
 cp $MAIN_DIR/workloads/bfs_2.2.1.cpp $PMOD_HOME/apps/bfs/bfs.cpp
 cp $MAIN_DIR/workloads/BFS.cpp $GALOIS_HOME/lonestar/bfs/bfs.cpp
 
+cp $MAIN_DIR/workloads/Boruvka.cpp $GALOIS_HOME/lonestar/boruvka
+cp $MAIN_DIR/workloads/BoruvkaMerge.cpp $PMOD_HOME/apps/boruvka
+
+cp $MAIN_DIR/workloads/PageRank-push.cpp $GALOIS_HOME/lonestar/pagerank
 
 # Compile Galois
 echo "${green}Compiling SSSP${reset}"
@@ -25,33 +29,30 @@ cd $GALOIS_DIR
 cd sssp;
 make clean; make -j32;
 
-#cd ../bfs;
-#make clean; make -j32;
+cd ../bfs;
+make clean; make -j32;
 
-#cd ../astar;
-#make clean; make -j32;
+cd ../boruvka;
+make clean; make -j32;
 
-#cd ../boruvka;
-#make clean; make -j32;
-
-#cd ../pagerank;
-#make clean; make -j32;
+cd ../pagerank;
+make clean; make -j32;
 
 cd $PMOD_DIR
 cd sssp;
 make clean; make -j32;
 
-#cd ../bfs;
-#make clean; make -j32;
+cd ../bfs;
+make clean; make -j32;
 
 #cd ../astar;
 #make clean; make -j32;
 
-#cd ../boruvka;
-#make clean; make -j32;
+cd ../boruvka;
+make clean; make -j32;
 
-#cd ../pagerank;
-#make clean; make -j32;
+cd ../pagerank;
+make clean; make -j32;
 
 cd $MAIN_DIR
 

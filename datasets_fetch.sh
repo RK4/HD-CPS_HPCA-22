@@ -20,11 +20,12 @@ gunzip USA-road-d.USA.gr.gz
 echo "${green}Converting Graph to binary format${reset}"
 $PMOD_HOME/build/tools/graph-convert-standalone/graph-convert-standalone -dimacs2gr USA-road-d.USA.gr USA-road-dUSA.bin
 
-#echo "${green}Fetching Web Google graph${reset}"
-#wget -c https://snap.stanford.edu/data/web-Google.txt.gz
-#gunzip web-Google.txt.gz
+echo "${green}Fetching Web Google graph${reset}"
+wget -c https://snap.stanford.edu/data/web-Google.txt.gz
+gunzip web-Google.txt.gz
+sed '1,4d' web-Google.txt > web-Google1.txt 
 
-#echo "${green}Converting Graph to binary format${reset}"
-#$PMOD_HOME/build/tools/graph-convert-standalone/graph-convert-standalone -intedgelist2gr web-Google.txt web-Google.bin 
+echo "${green}Converting Graph to binary format${reset}"
+$GALOIS_HOME/build/tools/graph-convert/graph-convert -edgelist2gr web-Google1.txt web-Google.bin 
 
 cd $MAIN_DIR

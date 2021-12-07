@@ -227,10 +227,16 @@ private:
   typedef internal::OrderedByIntegerMetricComparator<Index, UseDescending>
       Comparator;
   typedef typename Comparator::template with_local_map<CTy*>::type LMapTy;
+  
+  bool sync;
+  int pd;
 
   struct ThreadData
       : public internal::OrderedByIntegerMetricData<T, Index,
                                                     UseBarrier>::ThreadData {
+    int pd_counter = 0;
+    unsigned int latest_index = 0;
+    
     LMapTy local;
     Index curIndex;
     Index scanStart;
@@ -394,26 +400,64 @@ public:
   }
 
   galois::optional<value_type> pop() {
-    // Find a successful pop
     ThreadData& p = *data.getLocal();
+    galois::optional<value_type> retval;
+
+    if (substrate::ThreadPool::getTID() == 0) {
+    /* Priority drift logic */
+      if (p.pd_counter == 2000) {
+        sync = true;
+      }
+      if (p.pd_counter == 2001) {
+        sync = false;
+        p.pd_counter = 0;
+      
+        for (int i = 1; i < runtime::activeThreads; i++) {
+          int pd_ = p.latest_index - data.getRemote(i)->latest_index;
+          pd += abs(pd_);
+        } 
+        std::cout << "PD " << pd << std::endl;
+        pd = 0;
+      }
+    }
+    p.pd_counter++;
+
+    if (sync == true) p.latest_index = indexer(retval.get());
+    // Find a successful pop
+    
     CTy* C        = p.current;
 
-    if (this->hasStored(p, p.curIndex))
-      return this->popStored(p, p.curIndex);
+    if (this->hasStored(p, p.curIndex)) {
+      retval = this->popStored(p, p.curIndex);
+      if (sync == true) p.latest_index = indexer(retval.get());
+      return retval;
+    }
+     
 
     if (!UseBarrier && BlockPeriod &&
-        (p.numPops++ & ((1 << BlockPeriod) - 1)) == 0)
-      return slowPop(p);
-
+        (p.numPops++ & ((1 << BlockPeriod) - 1)) == 0) {
+          retval = slowPop(p);
+          if (sync == true) p.latest_index = indexer(retval.get());
+          return retval;          
+        }
+      
     galois::optional<value_type> item;
-    if (C && (item = C->pop()))
-      return item;
+    if (C && (item = C->pop())) {
+       if (sync == true) p.latest_index = indexer(item.get());
+       return item;
+    }
+      
 
-    if (UseBarrier)
+    if (UseBarrier) {
+      if (sync == true) p.latest_index = indexer(item.get());
       return item;
+    }
+      
 
     // Slow path
-    return slowPop(p);
+    retval =  slowPop(p);
+    if (sync == true) p.latest_index = indexer(retval.get());
+    return retval;
   }
 
   template <bool Barrier = UseBarrier>

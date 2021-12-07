@@ -516,6 +516,327 @@ public:
 };
 GALOIS_WLCOMPILECHECK(HDCPS)
 
+template <typename T, class Indexer = DummyIndexer<int>>
+class HDCPS_BR : private boost::noncopyable {
+
+/* PD */
+bool sync = false;
+unsigned int pd = 0;
+unsigned int pd_prev = 0;
+bool prev_decision = false; // false decrease
+bool first_iter = true;
+int dist_factor = 8;
+int dist_factor_prev = 8;
+int dist_factor_den = 1;
+
+public:
+  struct WorkItem{
+    T first;
+    unsigned dist;
+
+    WorkItem(const T& N, unsigned W): first(N), dist(W) {}
+    WorkItem(): first(), dist(0) {}
+
+    unsigned int operator() () const {
+      return dist;
+    }
+
+ 
+    friend bool operator<(const WorkItem& left,
+                          const WorkItem& right) {
+      return left.dist > right.dist;
+    }
+  };
+
+  struct ThreadData {
+    ThreadData() {
+      msg_queue =  new WorkItem[MSG_QUEUE_SIZE];
+    }
+    priority_queue<WorkItem> PQ;
+    int ctr = 0;
+    WorkItem *msg_queue;
+    unsigned long msg_loc_curr; 
+    unsigned long msg_loc = 0;
+    int rr = substrate::ThreadPool::getTID();
+    
+    /* PD */
+    int pd_counter = 0;
+    unsigned int latest_index = 0;
+  };
+
+  HDCPS_BR(const Indexer& x) : indexer(x) {
+
+  }
+
+  ~HDCPS_BR() {
+    
+  }
+  substrate::PerThreadStorage<ThreadData> data;
+  Indexer indexer;
+
+  template <typename _T>
+  using retype = HDCPS_BR<_T, Indexer>;
+
+  template <bool b>
+  using rethread = HDCPS_BR;
+
+  typedef T value_type;
+
+  void push(const value_type& val) {
+    
+    ThreadData& p = *data.getLocal();
+    if (p.msg_loc != p.msg_loc_curr) {
+        p.PQ.push(p.msg_queue[p.msg_loc]);
+        p.msg_loc = (p.msg_loc + 1) % MSG_QUEUE_SIZE;
+    }
+    
+    if (p.ctr <= dist_factor) {
+      p.PQ.push(WorkItem(val, indexer(val)));
+    }
+    else {
+      p.rr = (p.rr + 1) % runtime::activeThreads;
+      if (p.rr == substrate::ThreadPool::getTID()) {p.PQ.push(WorkItem(val, indexer(val)));}
+      ThreadData& r = *data.getRemote(p.rr); 
+     
+      int loc = r.msg_loc_curr; r.msg_loc_curr = (r.msg_loc_curr + 1) % MSG_QUEUE_SIZE;
+      r.msg_queue[loc] = WorkItem(val, indexer(val)); 
+      
+    }
+    
+    //p.ctr = (p.ctr + 1) % dist_factor_den;
+    
+  }
+
+  template <typename Iter>
+  void push(Iter b, Iter e) {
+    for (; b!=e; ++b) {
+      push(*b);
+    }
+ 
+  }
+
+  template <typename RangeTy>
+  void push_initial(const RangeTy& range) {
+    auto b = range.begin();
+    auto e = range.end();
+    ThreadData& p = *data.getLocal();
+    for (; b!=e; ++b) {
+      p.PQ.push(WorkItem(*b, indexer(*b)));
+    }
+  }
+  
+  galois::optional<value_type> pop() { 
+    
+    ThreadData& p = *data.getLocal();
+   
+    unsigned long loc = p.msg_loc_curr;
+
+    if (p.msg_loc != loc) {
+        p.PQ.push(p.msg_queue[p.msg_loc]);
+        p.msg_loc = (p.msg_loc + 1) % MSG_QUEUE_SIZE;
+    }
+
+    if (p.PQ.empty()) {
+        return galois::optional<value_type>();
+    }
+    galois::optional<value_type> retval;
+   
+    {
+      if (substrate::ThreadPool::getTID() == 0) {
+        /* Priority drift logic */
+        if (p.pd_counter == 2000) {
+          sync = true;
+        }
+        if (p.pd_counter == 2200) {
+          sync = false;
+          p.pd_counter = 0;
+          
+          for (int i = 1; i <  runtime::activeThreads; i++) {
+            int pd_ = p.latest_index - data.getRemote(i)->latest_index;
+            pd += abs(pd_);
+          }
+
+          if (first_iter) {
+            pd_prev = pd;
+            first_iter = false;
+          }
+          else {
+            if (pd >= (pd_prev) && prev_decision == true) {
+              dist_factor = min(dist_factor + 1, 8000); // decrease TDF
+              prev_decision = false;
+            }
+            else if (pd >= (pd_prev) && prev_decision == false) {
+              dist_factor = max(dist_factor - 1, 3000); // increase tdf
+              prev_decision = true;
+            }
+            else {
+              dist_factor = min(dist_factor + 1, 8000); // decrease TDF
+              prev_decision = false;
+            }
+          }
+          std::cout << "PD " << pd << std::endl;
+          pd_prev = pd;
+          pd = 0;
+          
+        }
+      }
+    }
+    p.pd_counter++;
+    
+    /* PD */
+    if (sync == true) {
+      p.latest_index = p.PQ.top().dist;
+    }
+    
+    retval = p.PQ.top().first; p.PQ.pop();
+   
+    return retval;
+  }
+};
+GALOIS_WLCOMPILECHECK(HDCPS_BR)
+
+/* */
+template <typename T, class Indexer = DummyIndexer<int>>
+class RELD_BR : private boost::noncopyable {
+/* Lock */
+using Lock_ty = galois::substrate::SimpleLock;
+
+bool sync = false;
+unsigned int pd = 0;
+
+
+public:
+
+  struct WorkItem{
+    T first;
+    unsigned dist;
+
+    WorkItem(const T& N, unsigned W): first(N), dist(W) {}
+    WorkItem(): first(), dist(0) {}
+
+    unsigned int operator() () const {
+      return dist;
+    }
+
+ 
+    friend bool operator<(const WorkItem& left,
+                          const WorkItem& right) {
+      return left.dist > right.dist;
+    }
+  };
+
+  RELD_BR(const Indexer& x) : indexer(x) {
+    srand( (unsigned)time(NULL) );
+    
+  }
+
+  ~RELD_BR() {
+
+  }
+  struct ThreadData {
+    priority_queue<WorkItem> PQ;
+    Lock_ty m_mutex;
+    int remote_thread;
+
+    int pd_counter = 0;
+    unsigned int latest_index = 0;
+  };
+  substrate::PerThreadStorage<ThreadData> data;
+  Indexer indexer;
+
+  template <typename _T>
+  using retype = RELD_BR<_T, Indexer>;
+
+  template <bool b>
+  using rethread = RELD_BR;
+
+  typedef T value_type;
+
+  void push(const value_type& val) {
+
+    ThreadData& p = *data.getLocal();
+    p.remote_thread = std::rand() % runtime::activeThreads;
+    if (p.remote_thread == substrate::ThreadPool::getTID()) {
+      p.m_mutex.lock();
+      p.PQ.push(WorkItem(val, indexer(val)));
+      p.m_mutex.unlock();
+    }
+    else {
+      ThreadData& r = *data.getRemote(p.remote_thread);
+      r.m_mutex.lock();
+      r.PQ.push(WorkItem(val, indexer(val)));
+      r.m_mutex.unlock();
+    }
+
+  }
+
+  template <typename Iter>
+  void push(Iter b, Iter e) {
+    
+    for (; b!=e; ++b) {
+      push(*b);
+    }
+
+  }
+
+  template <typename RangeTy>
+  void push_initial(const RangeTy& range) {
+    auto b = range.begin();
+    auto e = range.end();
+    ThreadData& p = *data.getLocal();
+    for (; b!=e; ++b) {
+      p.m_mutex.lock();
+      p.PQ.push(WorkItem(*b, indexer(*b)));
+      p.m_mutex.unlock();
+    }
+  }
+  
+  galois::optional<value_type> pop() { 
+    
+    ThreadData& p = *data.getLocal();
+    p.m_mutex.lock();
+
+    if (p.PQ.empty()) {
+        p.m_mutex.unlock(); 
+        return galois::optional<value_type>();
+    }
+    
+    galois::optional<value_type> retval;
+    
+    /* PD */
+    if (sync == true) {
+      p.latest_index = p.PQ.top().dist;
+    }
+
+    retval = p.PQ.top().first; p.PQ.pop();
+    p.m_mutex.unlock();
+    
+    if (substrate::ThreadPool::getTID() == 0) {
+     
+      /* Priority drift logic */
+      if (p.pd_counter == 2000) {
+        sync = true;
+      }
+      if (p.pd_counter == 2100) {
+        sync = false;
+        p.pd_counter = 0;
+        
+        for (int i = 1; i <  runtime::activeThreads; i++) {
+          int pd_ = p.latest_index - data.getRemote(i)->latest_index;
+          pd += abs(pd_);
+        } 
+        std::cout << "PD " << pd << std::endl;
+        pd = 0;
+      }
+    }
+    p.pd_counter++;
+
+
+    return retval;
+  }
+};
+GALOIS_WLCOMPILECHECK(RELD_BR)
+
 } // namespace worklists
 } // end namespace galois
 
