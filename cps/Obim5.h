@@ -404,6 +404,7 @@ public:
     galois::optional<value_type> retval;
 
     if (substrate::ThreadPool::getTID() == 0) {
+      int pd_temp = 0;
     /* Priority drift logic */
       if (p.pd_counter == 2000) {
         sync = true;
@@ -414,10 +415,11 @@ public:
       
         for (int i = 1; i < runtime::activeThreads; i++) {
           int pd_ = p.latest_index - data.getRemote(i)->latest_index;
-          pd += abs(pd_);
+          pd_temp += abs(pd_);
         } 
+        pd = (pd + pd_temp) / 2;
         std::cout << "PD " << pd << std::endl;
-        pd = 0;
+        
       }
     }
     p.pd_counter++;
@@ -854,25 +856,18 @@ public:
     
     ThreadData& p = *data.getLocal();
     int minnow_thread_id = substrate::ThreadPool::getTID();  
-    if (minnow_thread_id >= 36) {
+    if (minnow_thread_id >= 6) {
       int start = 0; int end = 0;
           
-      if (minnow_thread_id == 36) {
+      if (minnow_thread_id == 6) {
         start = 0;
-        end = 8;
+        end = 2;
       }
-      else if (minnow_thread_id == 37) {
-        start = 9;
-        end = 17;
+      else if (minnow_thread_id == 7) {
+        start = 3;
+        end = 5;
       }
-      else if (minnow_thread_id == 38) {
-        start = 18;
-        end = 26;
-      }
-      else if (minnow_thread_id == 39) {
-        start = 27;
-        end = 35;
-      }
+
 
       bool work_done = false;
       int work_done_counter = 0;
@@ -996,6 +991,7 @@ public:
         p.dequeue_lock.unlock();
 
         if (substrate::ThreadPool::getTID() == 0) {
+          int pd_temp = 0;
         /* Priority drift logic */
           if (p.pd_counter == 2000) {
             sync = true;
@@ -1004,12 +1000,13 @@ public:
             sync = false;
             p.pd_counter = 0;
           
-            for (int i = 1; i < 36; i++) {
+            for (int i = 1; i < 6; i++) {
               int pd_ = p.latest_index - data.getRemote(i)->latest_index;
-              pd += abs(pd_);
+              pd_temp += abs(pd_);
             } 
+            pd = (pd + pd_temp) / 2;
             std::cout << "PD " << pd << std::endl;
-            pd = 0;
+            
           }
         }
         p.pd_counter++;

@@ -333,7 +333,7 @@ public:
     p.m_mutex.unlock();
     
     if (substrate::ThreadPool::getTID() == 0) {
-     
+      int pd_temp = 0;
       /* Priority drift logic */
       if (p.pd_counter == 2000) {
         sync = true;
@@ -344,10 +344,11 @@ public:
         
         for (int i = 1; i <  runtime::activeThreads; i++) {
           int pd_ = p.latest_index - data.getRemote(i)->latest_index;
-          pd += abs(pd_);
+          pd_temp += abs(pd_);
         } 
+        pd = (pd + pd_temp) / 2;
         std::cout << "PD " << pd << std::endl;
-        pd = 0;
+        
       }
     }
     p.pd_counter++;
@@ -812,7 +813,7 @@ public:
     p.m_mutex.unlock();
     
     if (substrate::ThreadPool::getTID() == 0) {
-     
+      int pd_temp = 0;
       /* Priority drift logic */
       if (p.pd_counter == 2000) {
         sync = true;
@@ -823,10 +824,11 @@ public:
         
         for (int i = 1; i <  runtime::activeThreads; i++) {
           int pd_ = p.latest_index - data.getRemote(i)->latest_index;
-          pd += abs(pd_);
+          pd_temp += abs(pd_);
         } 
+        pd = (pd + pd_temp) / 2;
         std::cout << "PD " << pd << std::endl;
-        pd = 0;
+        
       }
     }
     p.pd_counter++;
