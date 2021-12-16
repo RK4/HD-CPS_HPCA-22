@@ -598,7 +598,7 @@ public:
         
         for (int i = 1; i <  Runtime::activeThreads; i++) {
           int pd_ = p.latest_index - current.getRemote(i)->latest_index;
-          pd_temp += abs(pd_);
+          pd_temp += abs(pd_ * 1024);
         } 
         pd = (pd + pd_temp) / 2;
         std::cout << "PD " << pd << std::endl;

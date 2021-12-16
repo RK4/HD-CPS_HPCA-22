@@ -409,7 +409,7 @@ public:
       if (p.pd_counter == 2000) {
         sync = true;
       }
-      if (p.pd_counter == 2001) {
+      if (p.pd_counter == 2100) {
         sync = false;
         p.pd_counter = 0;
       
@@ -715,6 +715,7 @@ private:
 
     bool minnow_thread;
     bool done = false;
+    
     LMapTy local;
     Index curIndex;
     Index scanStart;
@@ -732,7 +733,7 @@ private:
   };
 
 
-
+  int minnow_threads;
   typedef std::deque<std::pair<Index, CTy*>> MasterLog;
 
   // NB: Place dynamically growing masterLog after fixed-size PerThreadStorage
@@ -833,8 +834,8 @@ private:
   }
 
 public:
-  OrderedByIntegerMetricMinn(const Indexer& x = Indexer())
-      : data(this->identity), masterVersion(0), indexer(x) {}
+  OrderedByIntegerMetricMinn(const Indexer& x = Indexer(), int minnow_threads = 0)
+      : data(this->identity), masterVersion(0), indexer(x), minnow_threads(minnow_threads) {}
 
   ~OrderedByIntegerMetricMinn() {
     // Deallocate in LIFO order to give opportunity for simple garbage
@@ -856,18 +857,13 @@ public:
     
     ThreadData& p = *data.getLocal();
     int minnow_thread_id = substrate::ThreadPool::getTID();  
-    if (minnow_thread_id >= 6) {
+    int minnow_threads_start = runtime::activeThreads - minnow_threads;
+    int minnow_workers_per_core = minnow_threads_start / minnow_threads;
+    if (minnow_thread_id >= minnow_threads_start) {
       int start = 0; int end = 0;
-          
-      if (minnow_thread_id == 6) {
-        start = 0;
-        end = 2;
-      }
-      else if (minnow_thread_id == 7) {
-        start = 3;
-        end = 5;
-      }
-
+      int thread_index = minnow_thread_id - minnow_threads_start;
+      start = minnow_workers_per_core * thread_index;
+      end = start + (minnow_workers_per_core - 1);
 
       bool work_done = false;
       int work_done_counter = 0;
@@ -875,7 +871,8 @@ public:
         
         for (int i = start; i < end; i++) {
         T val;
-        
+        /* POP */
+        work_done = false;
         while(true) {
           data.getRemote(i)->enqueue_lock.lock();
           if (data.getRemote(i)->minnow_enqueue.empty()) {data.getRemote(i)->enqueue_lock.unlock(); break;}
@@ -885,7 +882,7 @@ public:
 
           Index index   = indexer(val);
           assert(!UseMonotonic ||this->compare(data.getRemote(i)->curIndex, index));
-
+          work_done = true;
           // Fast path
           if (index == data.getRemote(i)->curIndex && data.getRemote(i)->current) {
             data.getRemote(i)->current->push(val);
@@ -905,8 +902,7 @@ public:
         }
       }
 
-      /* POP */
-      work_done = false;
+
       for (int i = start; i < end; i++) {
         CTy* C  = data.getRemote(i)->current;
         
@@ -973,13 +969,17 @@ public:
       }
       /* Check termination condition */
       if (work_done == false) {
-        work_done_counter++;
-        
-        if (work_done_counter == 100) {
-          break;
+        for (int i = start; i < end; i++) {
+          if (data.getRemote(i)->minnow_enqueue.empty() && data.getRemote(i)->minnow_dequeue.empty()) {
+            
+          }
         }
       }
-      }
+        work_done_counter++;
+        if (work_done_counter == 65536*28) {
+          break;
+        }
+    }
      
     }
     else {
@@ -996,13 +996,13 @@ public:
           if (p.pd_counter == 2000) {
             sync = true;
           }
-          if (p.pd_counter == 2001) {
+          if (p.pd_counter == 2100) {
             sync = false;
             p.pd_counter = 0;
           
             for (int i = 1; i < 6; i++) {
               int pd_ = p.latest_index - data.getRemote(i)->latest_index;
-              pd_temp += abs(pd_);
+              pd_temp += abs(pd_ * 512);
             } 
             pd = (pd + pd_temp) / 2;
             std::cout << "PD " << pd << std::endl;

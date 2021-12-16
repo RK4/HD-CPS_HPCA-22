@@ -55,7 +55,10 @@ static cll::opt<unsigned int>
     stepShift("delta",
               cll::desc("Shift value for the deltastep (default value 13)"),
               cll::init(13));
-
+static cll::opt<unsigned int>
+    minCores("minCores",
+              cll::desc("Shift value for the deltastep (default value 13)"),
+              cll::init(4));
 enum Algo {
   deltaTile = 0,
   deltaStep,
@@ -247,7 +250,7 @@ void deltaStepAlgoMinn(Graph& graph, GNode source, const P& pushWrap,
                        }
                      }
                    },
-                   galois::wl<OBIM>(UpdateRequestIndexer{stepShift}),
+                   galois::wl<OBIM>(UpdateRequestIndexer{stepShift}, minCores),
                    galois::no_conflicts(), galois::loopname("SSSP"));
 
   if (TRACK_WORK) {

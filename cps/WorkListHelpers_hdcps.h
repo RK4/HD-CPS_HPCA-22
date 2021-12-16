@@ -344,7 +344,7 @@ public:
         
         for (int i = 1; i <  runtime::activeThreads; i++) {
           int pd_ = p.latest_index - data.getRemote(i)->latest_index;
-          pd_temp += abs(pd_);
+          pd_temp += abs(pd_ * 64);
         } 
         pd = (pd + pd_temp) / 2;
         std::cout << "PD " << pd << std::endl;
@@ -469,7 +469,7 @@ public:
         if (p.pd_counter == 2000) {
           sync = true;
         }
-        if (p.pd_counter == 2200) {
+        if (p.pd_counter == 2100) {
           sync = false;
           p.pd_counter = 0;
           
@@ -648,13 +648,13 @@ public:
         if (p.pd_counter == 2000) {
           sync = true;
         }
-        if (p.pd_counter == 2200) {
+        if (p.pd_counter == 2100) {
           sync = false;
           p.pd_counter = 0;
           
           for (int i = 1; i <  runtime::activeThreads; i++) {
             int pd_ = p.latest_index - data.getRemote(i)->latest_index;
-            pd += abs(pd_);
+            pd += abs(pd_ * 4);
           }
 
           if (first_iter) {
